@@ -3,6 +3,8 @@ import argparse
 import os
 import requests
 
+from PIL import Image, ImageDraw, ImageFont
+
 PL_GALLERY_JSON_URL = "https://www.planet.com/gallery.json"
 
 
@@ -31,7 +33,61 @@ def download_file(url, filepath):
         file.write(r.content)
 
 
-def fetch_images(verbose=True, directory=".", overwrite=False, download_limit=10, newer=False):
+def draw_info(image_path, metadata, font_family='Arial.ttf', font_size=24, new_name=None):
+    """
+    Draw gallery info. WIP
+    :param image_path: Path of image
+    :param metadata: Dictionary of the gallery item
+    :param font_family: Font family for text
+    :param font_size: Font size for text
+    :param new_name: New file name, otherwise overwrites original file
+    :return:
+    """
+
+    # Open as RGBA so we can layer in the text
+    image = Image.open(image_path).convert('RGBA')
+    image_width, image_height = image.size
+
+    # Drawing layer, since drawing directly on image doesn't seem to work
+    text_image = Image.new('RGBA', image.size, (255, 255, 255, 0))
+
+    # Text for the box
+    text = "{} - {}\nImage © Planet".format(metadata['title'], metadata['acquisition_date'][:10])
+
+    font = ImageFont.truetype(font_family, font_size)
+
+    draw = ImageDraw.Draw(text_image)
+
+    # Get text size so we know how big to draw the box
+    text_width, text_height = draw.multiline_textsize(text, font)
+
+    # For now, pad the box with half the height of the font
+    box_padding = font_size / 2
+
+    # Magic numbers for now of where it might look good
+    box_x_margin = 30  # From left-side
+    box_y_margin = 300  # From bottom
+
+    # Box size is text size + padding on all sides
+    box_width = text_width + (2 * box_padding)
+    box_height = text_height + (2 * box_padding)
+
+    # Start drawing at the right place, based on margin definitions
+    x = box_x_margin
+    y = image_height - box_height - box_y_margin
+
+    # Draw rectangle
+    draw.rectangle([(x, y), (x + box_width, y + box_height)], fill=(0, 0, 0, 100))
+
+    # Draw text
+    draw.multiline_text((x + box_padding, y + box_padding), text, fill=(255, 255, 255, 255), font=font)
+
+    out = Image.alpha_composite(image, text_image)
+
+    out.save(new_name if new_name else image_path)
+
+
+def fetch_images(verbose=True, directory=".", overwrite=False, download_limit=10, newer=False, draw=False):
     gallery = get_json()
     downloads = 0
 
@@ -48,6 +104,12 @@ def fetch_images(verbose=True, directory=".", overwrite=False, download_limit=10
 
             if verbose:
                 print("Saved to: {}".format(filepath))
+
+            if draw:
+                draw_info(filepath, item)
+
+                if verbose:
+                    print("Drew info into image: {}".format(filepath))
 
             # Track number of downloads
             downloads += 1
@@ -100,6 +162,14 @@ def main():
         help="Only get newer images. Script stops when it detects already-existing files.",
     )
 
+    parser.add_argument(
+        '-d', '--draw',
+        action='store_true',
+        dest='draw',
+        default=False,
+        help="Draw some basic info about the scene into the image",
+    )
+
     args = parser.parse_args()
 
     directory = args.directory
@@ -113,7 +183,9 @@ def main():
         directory=directory,
         overwrite=args.overwrite,
         download_limit=args.limit,
-        newer=args.newer)
+        newer=args.newer,
+        draw=args.draw,
+    )
 
 
 if __name__ == "__main__":
