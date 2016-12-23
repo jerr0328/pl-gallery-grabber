@@ -31,7 +31,7 @@ def download_file(url, filepath):
         file.write(r.content)
 
 
-def fetch_images(verbose=True, directory=".", overwrite=False, download_limit=10):
+def fetch_images(verbose=True, directory=".", overwrite=False, download_limit=10, newer=False):
     gallery = get_json()
     downloads = 0
 
@@ -53,6 +53,10 @@ def fetch_images(verbose=True, directory=".", overwrite=False, download_limit=10
             downloads += 1
             if downloads >= download_limit:
                 break
+        elif newer:
+            if verbose:
+                print("Stopping at image already existing: {}".format(filepath))
+            break
         elif verbose:
             print("Skipping existing file: {}".format(filepath))
 
@@ -79,7 +83,7 @@ def main():
         '-o', '--overwrite',
         action='store_true',
         default=False,
-        help="Get the image, even if it already exists",
+        help="Get the image, even if it already exists. Ignores --newer flag.",
     )
 
     parser.add_argument(
@@ -87,6 +91,13 @@ def main():
         type=int,
         default=10,
         help="Number of images to download [default: %(default)i]",
+    )
+
+    parser.add_argument(
+        '-n', '--newer',
+        action='store_true',
+        default=False,
+        help="Only get newer images. Script stops when it detects already-existing files.",
     )
 
     args = parser.parse_args()
@@ -97,7 +108,12 @@ def main():
         print("Directory doesn't exist: {}".format(directory))
         return 1
 
-    fetch_images(verbose=args.verbose, directory=directory, overwrite=args.overwrite, download_limit=args.limit)
+    fetch_images(
+        verbose=args.verbose,
+        directory=directory,
+        overwrite=args.overwrite,
+        download_limit=args.limit,
+        newer=args.newer)
 
 
 if __name__ == "__main__":
