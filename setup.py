@@ -31,7 +31,6 @@ def get_requirements(filename):
 
 dev_requires = []
 install_requires = get_requirements('requirements.txt')
-#tests_require = get_requirements('requirements_for_test.txt')
 
 COVERAGE_PACKAGES = find_packages(base_directory, exclude=["core", "*_tests", "*.*_tests", "*.migrations"])
 
@@ -40,14 +39,12 @@ if __name__ == "__main__":
         name='pl-gallery-grabber',
         version='0.1',
         author='Jeremy Mayeres',
-        url='https://hello.planet.com/code/jeremy/pl-gallery-grabber',
+        url='https://github.com/jerr0328/pl-gallery-grabber',
         description='Planet Gallery Image Grabber',
         long_description=open('README.md', encoding='utf-8').read(),
         packages=find_packages(exclude=('*tests', )),
         install_requires=install_requires,
         extras_require={
- #           'tests': tests_require,
             'dev': dev_requires,
         },
     )
-   
