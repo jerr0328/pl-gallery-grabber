@@ -3,7 +3,7 @@ import argparse
 import os
 import requests
 
-PL_GALLERY_JSON_URL = "https://www.planet.com/gallery.json"
+PL_GALLERY_JSON_URL = os.getenv("PL_GALLERY_JSON_URL", "https://www.planet.com/gallery.json")
 
 
 def get_json(url=PL_GALLERY_JSON_URL):
@@ -31,9 +31,9 @@ def download_file(url, filepath):
         file.write(r.content)
 
 
-def fetch_images(verbose=True, directory=".", overwrite=False, download_limit=10, newer=False):
+def fetch_images(verbose=True, directory=".", overwrite=False, limit=10, skip_existing=False):
     gallery = get_json()
-    downloads = 0
+    counter = 0
 
     for item in gallery:
         full_image_url = item['images']['full']
@@ -49,16 +49,19 @@ def fetch_images(verbose=True, directory=".", overwrite=False, download_limit=10
             if verbose:
                 print("Saved to: {}".format(filepath))
 
-            # Track number of downloads
-            downloads += 1
-            if downloads >= download_limit:
-                break
-        elif newer:
+            # Track downloads
+            counter += 1
+
+        else:
             if verbose:
-                print("Stopping at image already existing: {}".format(filepath))
+                print("Skipping existing file: {}".format(filepath))
+            # Increment counter unless otherwise specified
+            if not skip_existing:
+                counter += 1
+
+        # Stop if the limit has been reached
+        if counter >= limit:
             break
-        elif verbose:
-            print("Skipping existing file: {}".format(filepath))
 
 
 def main():
@@ -90,14 +93,15 @@ def main():
         '-l', '--limit',
         type=int,
         default=10,
-        help="Number of images to download [default: %(default)i]",
+        help="Number of items to check [default: %(default)i]",
     )
 
     parser.add_argument(
-        '-n', '--newer',
+        '-s', '--skip-existing',
         action='store_true',
+        dest='skip_existing',
         default=False,
-        help="Only get newer images. Script stops when it detects already-existing files.",
+        help="Don't count existing files towards the limit.",
     )
 
     args = parser.parse_args()
@@ -112,8 +116,8 @@ def main():
         verbose=args.verbose,
         directory=directory,
         overwrite=args.overwrite,
-        download_limit=args.limit,
-        newer=args.newer)
+        limit=args.limit,
+        skip_existing=args.skip_existing)
 
 
 if __name__ == "__main__":

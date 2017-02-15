@@ -37,7 +37,7 @@ COVERAGE_PACKAGES = find_packages(base_directory, exclude=["core", "*_tests", "*
 if __name__ == "__main__":
     setup(
         name='pl-gallery-grabber',
-        version='0.1',
+        version='0.2',
         author='Jeremy Mayeres',
         url='https://github.com/jerr0328/pl-gallery-grabber',
         description='Planet Gallery Image Grabber',
