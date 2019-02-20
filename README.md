@@ -4,6 +4,8 @@ Grabs the latest gallery images, useful if you like having gallery images for de
 
 Requires Python 3.
 
+**Note**: This project is no longer maintained, and the Planet gallery does not appear to be updated anymore. I am not affliated anymore with Planet and have no plans to further maintain this repository.
+
 ## Instructions
 
 1. Clone repository with `git clone git@github.com:jerr0328/pl-gallery-grabber.git`
